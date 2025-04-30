@@ -35,6 +35,7 @@ export function LoginForm() {
         setError("Invalid email or password")
       }
     } catch (err) {
+      console.log(err)
       setError("An error occurred during login")
     } finally {
       setIsLoading(false)

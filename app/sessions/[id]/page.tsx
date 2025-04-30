@@ -4,7 +4,8 @@ import { SessionDetails } from "@/components/session-details"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 
-export default function SessionPage({ params }: { params: { id: string } }) {
+export default async function SessionPage({ params }: { params: { id: string } }) {
+  const awaitedParams = await params;
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />
@@ -17,7 +18,7 @@ export default function SessionPage({ params }: { params: { id: string } }) {
             </Button>
           </Link>
         </div>
-        <SessionDetails sessionId={params.id} />
+        <SessionDetails sessionId={awaitedParams.id} />
       </main>
     </div>
   )
