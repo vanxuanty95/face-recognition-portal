@@ -10,10 +10,11 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { login } from "@/utils/apiService";
 
 export function LoginForm() {
   const router = useRouter()
-  const [email, setEmail] = useState("")
+  const [studentId, setStudentId] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -24,16 +25,11 @@ export function LoginForm() {
     setError("")
 
     try {
-      // In a real app, this would be an actual authentication call
-      // For demo purposes, we'll just simulate a successful login
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Check credentials (in a real app, this would be done server-side)
-      if (email === "teacher@example.com" && password === "password") {
-        router.push("/dashboard")
-      } else {
-        setError("Invalid email or password")
-      }
+      const data = await login({ studentId, password })
+      localStorage.setItem("token", data.token) // Save the token
+      localStorage.setItem("userId", data.user.id) // Save the user ID
+      localStorage.setItem("userName", data.user.name) // Save the user name
+      router.push("/dashboard")
     } catch (err) {
       console.log(err)
       setError("An error occurred during login")
@@ -45,8 +41,7 @@ export function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Login</CardTitle>
-        <CardDescription>Enter your credentials to access your account</CardDescription>
+        <CardTitle className="text-center">Login</CardTitle>
       </CardHeader>
       <CardContent>
         {error && (
@@ -63,8 +58,8 @@ export function LoginForm() {
                 id="email"
                 type="email"
                 placeholder="teacher@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={studentId}
+                onChange={(e) => setStudentId(e.target.value)}
                 required
               />
             </div>

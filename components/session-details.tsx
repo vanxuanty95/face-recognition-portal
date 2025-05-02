@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { QrCode, Calendar, Clock, MapPin } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import {QRCodeSVG} from "qrcode.react"
+import { QRCodeSVG } from "qrcode.react"
 
 // Mock session data
 const sessionData = {
@@ -70,31 +71,32 @@ const sessionData = {
   },
 }
 
-export function SessionDetails({ sessionId }: { sessionId: string }) {
+export function SessionDetails() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Simulate API call to fetch session details
-    const fetchSession = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      setSession(sessionData[sessionId as keyof typeof sessionData])
-      setLoading(false)
+    const sessionId = searchParams.get("id") // Retrieve sessionId inside useEffect
+    console.log("Session ID from URL:", sessionId)
+    // if (!sessionId) return
+
+    const storedSession = localStorage.getItem("selectedSession")
+    console.log("Stored session:", storedSession)
+    if (storedSession) {
+      console.log("Stored session:", JSON.parse(storedSession))
+      setSession(JSON.parse(storedSession))
     }
+  }, [searchParams]) // Use searchParams as a stable dependency
 
-    fetchSession()
-  }, [sessionId])
-
-  if (loading) {
+  if (!session) {
     return <div className="text-center py-10">Loading session details...</div>
   }
 
-  if (!session) {
-    return <div className="text-center py-10">Session not found</div>
-  }
-
-  const checkedInCount = session.students.filter((student: any) => student.checkedIn).length
+  const checkedInCount = Array.isArray(session.listStudent)
+    ? session.listStudent.filter((student: any) => student.checkedIn).length
+    : 0
 
   return (
     <div className="space-y-6">
@@ -121,7 +123,7 @@ export function SessionDetails({ sessionId }: { sessionId: string }) {
             <div>
               <h3 className="text-lg font-medium">Attendance</h3>
               <p className="text-sm text-gray-500">
-                {checkedInCount} of {session.students.length} students checked in
+                {checkedInCount} of {Array.isArray(session.listStudent) ? session.listStudent.length : 0} students checked in
               </p>
             </div>
             <Button onClick={() => setQrDialogOpen(true)}>
@@ -135,25 +137,24 @@ export function SessionDetails({ sessionId }: { sessionId: string }) {
               <TableRow>
                 <TableHead>Student Name</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Check-in Time</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {session.students.map((student: any) => (
-                <TableRow key={student.id}>
-                  <TableCell className="font-medium">{student.name}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        student.checkedIn ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {student.checkedIn ? "Present" : "Absent"}
-                    </span>
-                  </TableCell>
-                  <TableCell>{student.checkedInTime || "-"}</TableCell>
-                </TableRow>
-              ))}
+              {Array.isArray(session.listStudent) &&
+                session.listStudent.map((student: any) => (
+                  <TableRow key={student.id}>
+                    <TableCell className="font-medium">{student.name}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          student.checkedIn ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {student.checkedIn ? "Present" : "Absent"}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </CardContent>
@@ -169,7 +170,7 @@ export function SessionDetails({ sessionId }: { sessionId: string }) {
           </DialogHeader>
           <div className="flex flex-col items-center justify-center p-6">
             <QRCodeSVG
-              value={`https://teacher-checkin.example.com/check-in/${session.id}`}
+              value={[session.id, session.date]}
               size={250}
               level="H"
               includeMargin={true}
